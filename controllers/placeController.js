@@ -1,6 +1,5 @@
 import Place from "../models/Place.js";
 
-// Lấy tất cả địa điểm
 export const getPlaces = async (req, res) => {
   try {
     const places = await Place.find();
@@ -10,7 +9,6 @@ export const getPlaces = async (req, res) => {
   }
 };
 
-// Lấy chi tiết theo ID
 export const getPlaceById = async (req, res) => {
   try {
     const place = await Place.findById(req.params.id);
@@ -21,7 +19,6 @@ export const getPlaceById = async (req, res) => {
   }
 };
 
-// Tạo mới
 export const createPlace = async (req, res) => {
   try {
     const place = await Place.create(req.body);
@@ -31,18 +28,60 @@ export const createPlace = async (req, res) => {
   }
 };
 
-// Cập nhật
 export const updatePlace = async (req, res) => {
   try {
-    const place = await Place.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { id } = req.params;
+
+    const {
+      name,
+      address,
+      latitude,
+      longitude,
+      description,
+      category,
+      contact
+    } = req.body;
+
+    const updateData = {
+      ...(name && { name }),
+      ...(address && { address }),
+      ...(latitude && { latitude }),
+      ...(longitude && { longitude }),
+      ...(description && { description }),
+      ...(category && { category }),
+      ...(contact && { contact }),
+      updated_by: req.user?.name || "Unknown"
+    };
+
+    const place = await Place.findByIdAndUpdate(id, updateData, { new: true });
+
     if (!place) return res.status(404).json({ message: "Place not found" });
+
     res.json(place);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Xóa
+export const updatePlaceImages = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { image_url, img_set } = req.body;
+
+    const updateData = {};
+    if (image_url) updateData.image_url = image_url;
+    if (img_set) updateData.img_set = img_set;
+
+    const place = await Place.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!place) return res.status(404).json({ message: "Place not found" });
+
+    res.json(place);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const deletePlace = async (req, res) => {
   try {
     const place = await Place.findByIdAndDelete(req.params.id);
@@ -53,7 +92,6 @@ export const deletePlace = async (req, res) => {
   }
 };
 
-// 🔍 Search theo tên (keyword là chính)
 export const searchPlaceByName = async (req, res) => {
   try {
     const { name, category, latitude, longitude, radius = 4 } = req.query;
@@ -91,7 +129,6 @@ export const searchPlaceByName = async (req, res) => {
   }
 };
 
-// 🔍 Search theo category (category là chính)
 export const searchPlaceByCategory = async (req, res) => {
   try {
     const { category, name, latitude, longitude, radius = 4 } = req.query;
@@ -129,7 +166,6 @@ export const searchPlaceByCategory = async (req, res) => {
   }
 };
 
-// 🔍 Search nearby (latitude + longitude là chính)
 export const searchPlaceNearby = async (req, res) => {
   try {
     const { latitude, longitude, radius = 4, name, category } = req.query;

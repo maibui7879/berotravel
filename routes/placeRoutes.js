@@ -7,7 +7,8 @@ import {
   deletePlace,
   searchPlaceByName,
   searchPlaceByCategory,
-  searchPlaceNearby
+  searchPlaceNearby,
+  updatePlaceImages,
 } from "../controllers/placeController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -132,6 +133,44 @@ router.post("/", protect, createPlace);
  *         description: Place not found
  */
 router.put("/:id", protect, updatePlace);
+
+/**
+ * @swagger
+ * /api/places/images/{id}:
+ *   put:
+ *     summary: Cập nhật ảnh chính và ảnh phụ cho Place (Không yêu cầu xác thực)
+ *     tags: [Places]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của địa điểm
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image_url:
+ *                 type: string
+ *                 example: "https://example.com/main.jpg"
+ *               img_set:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["https://example.com/img1.jpg", "https://example.com/img2.jpg"]
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *       404:
+ *         description: Không tìm thấy địa điểm
+ *       500:
+ *         description: Lỗi server
+ */
+router.put("/images/:id", updatePlaceImages); 
 
 /**
  * @swagger

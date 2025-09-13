@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, loginUser, getProfile } from "../controllers/userController.js";
+import { registerUser, loginUser, getProfile, getUserById } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -135,5 +135,55 @@ router.post("/login", loginUser);
  *         description: Server error
  */
 router.get("/profile", protect, getProfile);
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: Lấy thông tin user theo ID
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID của user cần lấy
+ *     responses:
+ *       200:
+ *         description: Thông tin user thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                 avatar_url:
+ *                   type: string
+ *                 favorites:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 __v:
+ *                   type: integer
+ *       404:
+ *         description: User không tồn tại
+ *       500:
+ *         description: Lỗi server
+ */
+router.get("/:id", getUserById);
 
 export default router;

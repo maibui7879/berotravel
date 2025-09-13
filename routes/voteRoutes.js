@@ -32,7 +32,7 @@ const router = express.Router();
  *                 description: ID of the place or review
  *               target_type:
  *                 type: string
- *                 enum: [place, review]
+ *                 enum: [Reply, Review]
  *                 description: Type of target
  *               vote_type:
  *                 type: string
@@ -68,7 +68,7 @@ router.post("/", protect, createVote);
  *         required: true
  *         schema:
  *           type: string
- *           enum: [place, review]
+ *           enum: [Review, Reply]
  *         description: Type of target
  *     responses:
  *       200:

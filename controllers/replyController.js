@@ -12,11 +12,29 @@ export const getReplies = async (req, res) => {
 
 export const createReply = async (req, res) => {
   try {
+    const { review_id, content, parent_reply_id } = req.body;
+    const user_id = req.user._id;  // Người dùng đang trả lời bình luận
+
+    // Tạo reply mới
     const reply = await Reply.create({
-      ...req.body,
-      user_id: req.user._id
+      review_id,
+      parent_reply_id,
+      user_id,
+      content
     });
-    res.json(reply);
+
+    const review = await Review.findById(review_id);
+    const userReplyingTo = review.user_id;  
+
+    if (userReplyingTo.toString() !== user_id.toString()) {
+      const notificationMessage = `Bạn có một phản hồi mới từ ${req.user.name} trong bình luận của bạn.`;
+      await Notification.create({
+        user_id: userReplyingTo,
+        message: notificationMessage
+      });
+    }
+
+    res.status(201).json(reply);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -13,7 +13,8 @@ const placeSchema = new mongoose.Schema({
     phone: String,
     email: String
   },
-  favorite_count: { type: Number, default: 0 }
+  favorite_count: { type: Number, default: 0 },
+  updated_by: { type: String } // ➕ tên người cập nhật cuối cùng
 }, { timestamps: true });
 
 export default mongoose.model("Place", placeSchema);

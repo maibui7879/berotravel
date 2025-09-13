@@ -21,12 +21,21 @@ export const createVote = async (req, res) => {
 export const getVotes = async (req, res) => {
   try {
     const { target_id, target_type } = req.query;
+
     const votes = await Vote.find({ target_id, target_type });
-    res.json(votes);
+
+    const up = votes.filter(v => v.vote_type === "upvote").length;
+    const down = votes.filter(v => v.vote_type === "downvote").length;
+
+    res.json({
+      votes,
+      summary: { up, down }
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 export const deleteVote = async (req, res) => {
   try {
