@@ -2,7 +2,7 @@ import pandas as pd
 from pymongo import MongoClient
 
 # Kết nối tới MongoDB trong Docker network
-client = MongoClient("mongodb://mongo:27017/")
+client = MongoClient("mongodb+srv://maibui7879:7879maibui@cluster0.zs7wpoi.mongodb.net/")
 
 db = client["travel_review_app"]
 collection = db["places"]

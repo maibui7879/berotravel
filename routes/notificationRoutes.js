@@ -7,21 +7,21 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Notifications
- *   description: API for notification management (fetching and marking notifications)
+ *   name: Thông báo
+ *   description: API quản lý thông báo (lấy danh sách và đánh dấu đã đọc)
  */
 
 /**
  * @swagger
  * /notifications:
  *   get:
- *     summary: Get list of notifications for the logged-in user
- *     tags: [Notifications]
+ *     summary: Lấy danh sách thông báo của người dùng đã đăng nhập
+ *     tags: [Thông báo]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: A list of notifications for the user
+ *         description: Danh sách thông báo
  *         content:
  *           application/json:
  *             schema:
@@ -33,14 +33,16 @@ const router = express.Router();
  *                     type: string
  *                   message:
  *                     type: string
+ *                     description: Nội dung thông báo
  *                   read:
  *                     type: boolean
+ *                     description: Trạng thái đã đọc
  *                   createdAt:
  *                     type: string
  *                   updatedAt:
  *                     type: string
  *       500:
- *         description: Server error
+ *         description: Lỗi server
  */
 router.get("/", protect, getNotifications);
 
@@ -48,20 +50,20 @@ router.get("/", protect, getNotifications);
  * @swagger
  * /notifications/{notification_id}:
  *   put:
- *     summary: Mark a notification as read
- *     tags: [Notifications]
+ *     summary: Đánh dấu một thông báo là đã đọc
+ *     tags: [Thông báo]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: notification_id
  *         required: true
- *         description: ID of the notification to mark as read
+ *         description: ID của thông báo cần đánh dấu đã đọc
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Notification successfully marked as read
+ *         description: Thông báo đã được đánh dấu là đã đọc
  *         content:
  *           application/json:
  *             schema:
@@ -78,9 +80,9 @@ router.get("/", protect, getNotifications);
  *                 updatedAt:
  *                   type: string
  *       404:
- *         description: Notification not found
+ *         description: Không tìm thấy thông báo
  *       500:
- *         description: Server error
+ *         description: Lỗi server
  */
 router.put("/:notification_id", protect, markNotificationAsRead);
 

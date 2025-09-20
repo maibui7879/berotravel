@@ -5,10 +5,9 @@ import {
   createPlace,
   updatePlace,
   deletePlace,
-  searchPlaceByName,
-  searchPlaceByCategory,
   searchPlaceNearby,
   updatePlaceImages,
+  getPlaceCount
 } from "../controllers/placeController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -17,19 +16,37 @@ const router = express.Router();
 /**
  * @swagger
  * tags:
- *   name: Places
- *   description: API for managing places (restaurants, markets, attractions)
+ *   name: Địa điểm
+ *   description: API quản lý địa điểm (nhà hàng, chợ, điểm tham quan)
  */
-
+/**
+ * @swagger
+ * /places/count:
+ *   get:
+ *     summary: Lấy tổng số địa điểm hiện có
+ *     tags: [Địa điểm]
+ *     responses:
+ *       200:
+ *         description: Số lượng place
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalPlaces:
+ *                   type: integer
+ *                   example: 123
+ */
+router.get("/count", getPlaceCount);
 /**
  * @swagger
  * /places:
  *   get:
- *     summary: Get all places
- *     tags: [Places]
+ *     summary: Lấy danh sách tất cả địa điểm
+ *     tags: [Địa điểm]
  *     responses:
  *       200:
- *         description: List of all places
+ *         description: Danh sách tất cả địa điểm
  */
 router.get("/", getPlaces);
 
@@ -37,20 +54,20 @@ router.get("/", getPlaces);
  * @swagger
  * /places/{id}:
  *   get:
- *     summary: Get a place by ID
- *     tags: [Places]
+ *     summary: Lấy thông tin địa điểm theo ID
+ *     tags: [Địa điểm]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: Place ID
+ *         description: ID của địa điểm
  *     responses:
  *       200:
- *         description: Place object
+ *         description: Thông tin địa điểm
  *       404:
- *         description: Place not found
+ *         description: Không tìm thấy địa điểm
  */
 router.get("/:id", getPlaceById);
 
@@ -58,8 +75,8 @@ router.get("/:id", getPlaceById);
  * @swagger
  * /places:
  *   post:
- *     summary: Create a new place
- *     tags: [Places]
+ *     summary: Tạo địa điểm mới
+ *     tags: [Địa điểm]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -99,9 +116,9 @@ router.get("/:id", getPlaceById);
  *                 type: number
  *     responses:
  *       200:
- *         description: Created place object
+ *         description: Địa điểm mới đã được tạo
  *       500:
- *         description: Server error
+ *         description: Lỗi server
  */
 router.post("/", protect, createPlace);
 
@@ -109,8 +126,8 @@ router.post("/", protect, createPlace);
  * @swagger
  * /places/{id}:
  *   put:
- *     summary: Update a place by ID
- *     tags: [Places]
+ *     summary: Cập nhật thông tin địa điểm theo ID
+ *     tags: [Địa điểm]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -119,7 +136,7 @@ router.post("/", protect, createPlace);
  *         required: true
  *         schema:
  *           type: string
- *         description: Place ID
+ *         description: ID của địa điểm
  *     requestBody:
  *       required: true
  *       content:
@@ -128,18 +145,18 @@ router.post("/", protect, createPlace);
  *             type: object
  *     responses:
  *       200:
- *         description: Updated place object
+ *         description: Thông tin địa điểm đã được cập nhật
  *       404:
- *         description: Place not found
+ *         description: Không tìm thấy địa điểm
  */
 router.put("/:id", protect, updatePlace);
 
 /**
  * @swagger
- * /api/places/images/{id}:
+ * /places/images/{id}:
  *   put:
- *     summary: Cập nhật ảnh chính và ảnh phụ cho Place (Không yêu cầu xác thực)
- *     tags: [Places]
+ *     summary: Cập nhật ảnh chính và ảnh phụ cho địa điểm (không yêu cầu xác thực)
+ *     tags: [Địa điểm]
  *     parameters:
  *       - in: path
  *         name: id
@@ -164,7 +181,7 @@ router.put("/:id", protect, updatePlace);
  *                 example: ["https://example.com/img1.jpg", "https://example.com/img2.jpg"]
  *     responses:
  *       200:
- *         description: Thành công
+ *         description: Cập nhật ảnh thành công
  *       404:
  *         description: Không tìm thấy địa điểm
  *       500:
@@ -176,8 +193,8 @@ router.put("/images/:id", updatePlaceImages);
  * @swagger
  * /places/{id}:
  *   delete:
- *     summary: Delete a place by ID
- *     tags: [Places]
+ *     summary: Xóa địa điểm theo ID
+ *     tags: [Địa điểm]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -186,125 +203,53 @@ router.put("/images/:id", updatePlaceImages);
  *         required: true
  *         schema:
  *           type: string
- *         description: Place ID
+ *         description: ID của địa điểm
  *     responses:
  *       200:
- *         description: Place deleted
+ *         description: Xóa địa điểm thành công
  *       404:
- *         description: Place not found
+ *         description: Không tìm thấy địa điểm
  */
 router.delete("/:id", protect, deletePlace);
 
 /**
  * @swagger
- * /places/search/by-name:
- *   get:
- *     summary: Search places by name
- *     tags: [Places]
- *     parameters:
- *       - in: query
- *         name: name
- *         required: true
- *         schema:
- *           type: string
- *         description: Name keyword
- *       - in: query
- *         name: category
- *         schema:
- *           type: string
- *         description: Optional category filter
- *       - in: query
- *         name: latitude
- *         schema:
- *           type: number
- *         description: Optional current latitude for nearby filter
- *       - in: query
- *         name: longitude
- *         schema:
- *           type: number
- *         description: Optional current longitude for nearby filter
- *       - in: query
- *         name: radius
- *         schema:
- *           type: number
- *           default: 4
- *         description: Radius in km for nearby filter
- *     responses:
- *       200:
- *         description: List of matching places
- */
-router.get("/search/by-name", searchPlaceByName);
-
-/**
- * @swagger
- * /places/search/by-category:
- *   get:
- *     summary: Search places by category
- *     tags: [Places]
- *     parameters:
- *       - in: query
- *         name: category
- *         required: true
- *         schema:
- *           type: string
- *         description: Category keyword
- *       - in: query
- *         name: name
- *         schema:
- *           type: string
- *         description: Optional name filter
- *       - in: query
- *         name: latitude
- *         schema:
- *           type: number
- *       - in: query
- *         name: longitude
- *         schema:
- *           type: number
- *       - in: query
- *         name: radius
- *         schema:
- *           type: number
- *           default: 4
- *     responses:
- *       200:
- *         description: List of places filtered by category (and optional nearby)
- */
-router.get("/search/by-category", searchPlaceByCategory);
-
-/**
- * @swagger
  * /places/search/nearby:
  *   get:
- *     summary: Search nearby places
- *     tags: [Places]
+ *     summary: Tìm địa điểm gần vị trí hiện tại
+ *     tags: [Địa điểm]
  *     parameters:
  *       - in: query
  *         name: latitude
  *         required: true
  *         schema:
  *           type: number
+ *         description: Vĩ độ hiện tại
  *       - in: query
  *         name: longitude
  *         required: true
  *         schema:
  *           type: number
+ *         description: Kinh độ hiện tại
  *       - in: query
  *         name: radius
  *         schema:
  *           type: number
  *           default: 4
+ *         description: Bán kính tìm kiếm (km)
  *       - in: query
  *         name: name
  *         schema:
  *           type: string
+ *         description: Lọc theo tên địa điểm (tùy chọn)
  *       - in: query
  *         name: category
  *         schema:
  *           type: string
+ *         description: Lọc theo danh mục địa điểm (tùy chọn)
  *     responses:
  *       200:
- *         description: List of nearby places filtered by optional name/category
+ *         description: Danh sách địa điểm gần vị trí hiện tại
  */
 router.get("/search/nearby", searchPlaceNearby);
 

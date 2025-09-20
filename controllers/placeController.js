@@ -8,6 +8,14 @@ export const getPlaces = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+export const getPlaceCount = async (req, res) => {
+  try {
+    const count = await Place.countDocuments();
+    res.json({ totalPlaces: count });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const getPlaceById = async (req, res) => {
   try {
@@ -21,7 +29,10 @@ export const getPlaceById = async (req, res) => {
 
 export const createPlace = async (req, res) => {
   try {
-    const place = await Place.create(req.body);
+    const place = await Place.create({
+      ...req.body,
+      updated_by: req.user?.name || "Unknown"
+    });
     res.json(place);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -31,7 +42,6 @@ export const createPlace = async (req, res) => {
 export const updatePlace = async (req, res) => {
   try {
     const { id } = req.params;
-
     const {
       name,
       address,
@@ -86,81 +96,8 @@ export const deletePlace = async (req, res) => {
   try {
     const place = await Place.findByIdAndDelete(req.params.id);
     if (!place) return res.status(404).json({ message: "Place not found" });
+
     res.json({ message: "Place deleted" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const searchPlaceByName = async (req, res) => {
-  try {
-    const { name, category, latitude, longitude, radius = 4 } = req.query;
-
-    let query = {};
-    if (name) query.name = { $regex: name, $options: "i" };
-    if (category) query.category = { $regex: category, $options: "i" };
-
-    let places = await Place.find(query);
-
-    if (latitude && longitude) {
-      const lat = parseFloat(latitude);
-      const lon = parseFloat(longitude);
-      const r = parseFloat(radius);
-      const earthRadius = 6371;
-
-      places = places.filter((place) => {
-        const dLat = (place.latitude - lat) * Math.PI / 180;
-        const dLon = (place.longitude - lon) * Math.PI / 180;
-        const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos(lat * Math.PI / 180) *
-          Math.cos(place.latitude * Math.PI / 180) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = earthRadius * c;
-        return distance <= r;
-      });
-    }
-
-    res.json(places);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const searchPlaceByCategory = async (req, res) => {
-  try {
-    const { category, name, latitude, longitude, radius = 4 } = req.query;
-
-    let query = {};
-    if (category) query.category = { $regex: category, $options: "i" };
-    if (name) query.name = { $regex: name, $options: "i" };
-
-    let places = await Place.find(query);
-
-    if (latitude && longitude) {
-      const lat = parseFloat(latitude);
-      const lon = parseFloat(longitude);
-      const r = parseFloat(radius);
-      const earthRadius = 6371;
-
-      places = places.filter((place) => {
-        const dLat = (place.latitude - lat) * Math.PI / 180;
-        const dLon = (place.longitude - lon) * Math.PI / 180;
-        const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos(lat * Math.PI / 180) *
-          Math.cos(place.latitude * Math.PI / 180) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = earthRadius * c;
-        return distance <= r;
-      });
-    }
-
-    res.json(places);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -168,7 +105,7 @@ export const searchPlaceByCategory = async (req, res) => {
 
 export const searchPlaceNearby = async (req, res) => {
   try {
-    const { latitude, longitude, radius = 4, name, category } = req.query;
+    const { latitude, longitude, radius = 4, name, category, page = 1, limit = 10 } = req.query;
 
     if (!latitude || !longitude)
       return res.status(400).json({ message: "Missing latitude or longitude" });
@@ -179,7 +116,7 @@ export const searchPlaceNearby = async (req, res) => {
     const earthRadius = 6371;
 
     let places = await Place.find();
-    
+
     if (name) places = places.filter(p => p.name.toLowerCase().includes(name.toLowerCase()));
     if (category) places = places.filter(p => p.category.toLowerCase().includes(category.toLowerCase()));
 
@@ -197,7 +134,20 @@ export const searchPlaceNearby = async (req, res) => {
       return distance <= r;
     });
 
-    res.json(nearby);
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const startIndex = (pageNum - 1) * limitNum;
+    const endIndex = pageNum * limitNum;
+
+    const paginated = nearby.slice(startIndex, endIndex);
+
+    res.json({
+      total: nearby.length,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(nearby.length / limitNum),
+      data: paginated
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

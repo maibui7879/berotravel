@@ -10,6 +10,7 @@ import replyRoutes from "./routes/replyRoutes.js";
 import voteRoutes from "./routes/voteRoutes.js";
 import favoriteRoutes from "./routes/favoriteRoutes.js"
 import notificationRoutes from "./routes/notificationRoutes.js";
+import userStatRoutes from "./routes/userStatRoutes.js"
 dotenv.config();
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/replies", replyRoutes);
 app.use("/api/votes", voteRoutes);
 app.use("/api/favorite", favoriteRoutes);
 app.use("/api/notifictions", notificationRoutes);
+app.use("/api/stats", userStatRoutes);
 setupSwagger(app);
 // DB Connect
 mongoose

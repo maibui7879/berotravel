@@ -14,7 +14,7 @@ const placeSchema = new mongoose.Schema({
     email: String
   },
   favorite_count: { type: Number, default: 0 },
-  updated_by: { type: String } // ➕ tên người cập nhật cuối cùng
+  updated_by: { type: String } 
 }, { timestamps: true });
 
 export default mongoose.model("Place", placeSchema);
