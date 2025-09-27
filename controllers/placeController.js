@@ -1,4 +1,5 @@
 import Place from "../models/Place.js";
+import AdminLog from "../models/AdminLog.js";
 
 export const getPlaces = async (req, res) => {
   try {
@@ -8,6 +9,7 @@ export const getPlaces = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 export const getPlaceCount = async (req, res) => {
   try {
     const count = await Place.countDocuments();
@@ -33,6 +35,15 @@ export const createPlace = async (req, res) => {
       ...req.body,
       updated_by: req.user?.name || "Unknown"
     });
+
+    await AdminLog.create({
+      user: req.user._id,
+      action: "create",
+      targetType: "Place",
+      target: place._id,
+      description: `Người dùng ${req.user.name} đã tạo place ${place.name}`
+    });
+
     res.json(place);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -42,30 +53,18 @@ export const createPlace = async (req, res) => {
 export const updatePlace = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      name,
-      address,
-      latitude,
-      longitude,
-      description,
-      category,
-      contact
-    } = req.body;
-
-    const updateData = {
-      ...(name && { name }),
-      ...(address && { address }),
-      ...(latitude && { latitude }),
-      ...(longitude && { longitude }),
-      ...(description && { description }),
-      ...(category && { category }),
-      ...(contact && { contact }),
-      updated_by: req.user?.name || "Unknown"
-    };
+    const updateData = { ...req.body, updated_by: req.user?.name || "Unknown" };
 
     const place = await Place.findByIdAndUpdate(id, updateData, { new: true });
-
     if (!place) return res.status(404).json({ message: "Place not found" });
+
+    await AdminLog.create({
+      user: req.user._id,
+      action: "update",
+      targetType: "Place",
+      target: place._id,
+      description: `Người dùng ${req.user.name} đã chỉnh sửa place ${place.name}`
+    });
 
     res.json(place);
   } catch (error) {
@@ -83,8 +82,15 @@ export const updatePlaceImages = async (req, res) => {
     if (img_set) updateData.img_set = img_set;
 
     const place = await Place.findByIdAndUpdate(id, updateData, { new: true });
-
     if (!place) return res.status(404).json({ message: "Place not found" });
+
+    await AdminLog.create({
+      user: req.user._id,
+      action: "update",
+      targetType: "Place",
+      target: place._id,
+      description: `Người dùng ${req.user.name} đã cập nhật hình ảnh place ${place.name}`
+    });
 
     res.json(place);
   } catch (error) {
@@ -97,6 +103,14 @@ export const deletePlace = async (req, res) => {
     const place = await Place.findByIdAndDelete(req.params.id);
     if (!place) return res.status(404).json({ message: "Place not found" });
 
+    await AdminLog.create({
+      user: req.user._id,
+      action: "delete",
+      targetType: "Place",
+      target: place._id,
+      description: `Người dùng ${req.user.name} đã xóa place ${place.name}`
+    });
+
     res.json({ message: "Place deleted" });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -106,7 +120,6 @@ export const deletePlace = async (req, res) => {
 export const searchPlaceNearby = async (req, res) => {
   try {
     const { latitude, longitude, radius = 4, name, category, page = 1, limit = 10 } = req.query;
-
     if (!latitude || !longitude)
       return res.status(400).json({ message: "Missing latitude or longitude" });
 
@@ -124,11 +137,10 @@ export const searchPlaceNearby = async (req, res) => {
       const dLat = (place.latitude - lat) * Math.PI / 180;
       const dLon = (place.longitude - lon) * Math.PI / 180;
       const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.sin(dLat / 2) ** 2 +
         Math.cos(lat * Math.PI / 180) *
         Math.cos(place.latitude * Math.PI / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
+        Math.sin(dLon / 2) ** 2;
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const distance = earthRadius * c;
       return distance <= r;

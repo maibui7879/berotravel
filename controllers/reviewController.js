@@ -2,22 +2,17 @@ import Review from "../models/Review.js";
 import sanitizeHtml from "sanitize-html";
 import { updateUserStats } from "./userStatController.js";
 import Vote from "../models/Vote.js";
+import AdminLog from "../models/AdminLog.js";
 
+// Lấy top 3 review theo vote
 export const getReviewSortByVote = async (req, res) => {
   try {
-    // Lấy tất cả review
-    const reviews = await Review.find()
-      .populate("user_id", "name avatar_url");
-
-    // Lọc bỏ những review không có comment
+    const reviews = await Review.find().populate("user_id", "name avatar_url");
     const reviewsWithContent = reviews.filter(r => r.comment && r.comment.trim() !== "");
-
     const reviewIds = reviewsWithContent.map(r => r._id);
 
-    // Lấy votes cho tất cả review
     const votes = await Vote.find({ target_id: { $in: reviewIds }, target_type: "review" });
 
-    // Tính score cho từng review
     const voteMap = {};
     votes.forEach(v => {
       const id = v.target_id.toString();
@@ -25,13 +20,11 @@ export const getReviewSortByVote = async (req, res) => {
       voteMap[id] += v.vote_type === "upvote" ? 1 : -1;
     });
 
-    // Gắn score vào review
     const reviewsWithScore = reviewsWithContent.map(r => ({
       ...r.toObject(),
       vote_score: voteMap[r._id.toString()] || 0
     }));
 
-    // Sắp xếp giảm dần theo vote_score và lấy 3 review đầu
     reviewsWithScore.sort((a, b) => b.vote_score - a.vote_score);
     const top3 = reviewsWithScore.slice(0, 3);
 
@@ -41,17 +34,16 @@ export const getReviewSortByVote = async (req, res) => {
   }
 };
 
-
-// Lấy tất cả reviews của một place
+// Lấy tất cả review của place
 export const getReviews = async (req, res) => {
   try {
-    const reviews = await Review.find({ place_id: req.params.placeId })
-      .populate("user_id", "name avatar_url");
+    const reviews = await Review.find({ place_id: req.params.placeId }).populate("user_id", "name avatar_url");
     res.json(reviews);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 export const getReviewsCount = async (req, res) => {
   try {
     const count = await Review.countDocuments();
@@ -60,7 +52,8 @@ export const getReviewsCount = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-// Tạo review mới (rich text comment)
+
+// Tạo review mới
 export const createReview = async (req, res) => {
   try {
     const cleanComment = sanitizeHtml(req.body.comment, {
@@ -76,8 +69,15 @@ export const createReview = async (req, res) => {
       image_url: req.body.image_url || null,
     });
 
-    // Cập nhật thống kê user
     await updateUserStats(req.user._id);
+
+    await AdminLog.create({
+      user: req.user._id,
+      action: "create",
+      targetType: "Review",
+      target: review._id,
+      description: `User ${req.user.name} đã tạo review cho place ${req.params.placeId}`
+    });
 
     res.json(review);
   } catch (error) {
@@ -85,7 +85,7 @@ export const createReview = async (req, res) => {
   }
 };
 
-// Cập nhật review (rich text comment)
+// Cập nhật review
 export const updateReview = async (req, res) => {
   try {
     const cleanComment = sanitizeHtml(req.body.comment, {
@@ -101,8 +101,15 @@ export const updateReview = async (req, res) => {
 
     if (!review) return res.status(404).json({ message: "Review not found" });
 
-    // Cập nhật thống kê user
     await updateUserStats(req.user._id);
+
+    await AdminLog.create({
+      user: req.user._id,
+      action: "update",
+      targetType: "Review",
+      target: review._id,
+      description: `User ${req.user.name} đã cập nhật review ${review._id}`
+    });
 
     res.json(review);
   } catch (error) {
@@ -116,8 +123,15 @@ export const deleteReview = async (req, res) => {
     const review = await Review.findOneAndDelete({ _id: req.params.id, user_id: req.user._id });
     if (!review) return res.status(404).json({ message: "Review not found" });
 
-    // Cập nhật thống kê user
     await updateUserStats(req.user._id);
+
+    await AdminLog.create({
+      user: req.user._id,
+      action: "delete",
+      targetType: "Review",
+      target: review._id,
+      description: `User ${req.user.name} đã xóa review ${review._id}`
+    });
 
     res.json({ message: "Review deleted" });
   } catch (error) {

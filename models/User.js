@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   dob: String,
   bio: String,
   role: { type: String, default: "user" },
+  status: { type: String, enum: ["active", "suspended"], default: "active" },
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: "Place" }]
 }, { timestamps: true });
 

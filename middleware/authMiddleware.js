@@ -10,8 +10,24 @@ export const protect = async (req, res, next) => {
       req.user = await User.findById(decoded.id).select("-password");
       next();
     } catch (error) {
-      res.status(401).json({ message: "Not authorized, token failed" });
+      return res.status(401).json({ message: "Not authorized, token failed" });
     }
   }
-  if (!token) res.status(401).json({ message: "Not authorized, no token" });
+  if (!token) return res.status(401).json({ message: "Not authorized, no token" });
+};
+
+export const isAdmin = (req, res, next) => {
+  if (req.user && req.user.role === "admin") {
+    next();
+  } else {
+    res.status(403).json({ message: "Not authorized as admin" });
+  }
+};
+
+export const isActive = (req, res, next) => {
+  if (req.user && req.user.status !== "suspended") {
+    next();
+  } else {
+    res.status(403).json({ message: "Account suspended" });
+  }
 };

@@ -1,8 +1,10 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import AdminLog from "../models/AdminLog.js";
 
-const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+const generateToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
 export const getUsersCount = async (req, res) => {
   try {
@@ -22,10 +24,19 @@ export const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, password: hashedPassword });
 
+    await AdminLog.create({
+      user: user._id,
+      action: "create",
+      targetType: "User",
+      target: user._id,
+      description: `User ${user.name} đã đăng ký`
+    });
+
     res.json({
       _id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
       token: generateToken(user.id)
     });
   } catch (error) {
@@ -37,20 +48,46 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (user && (await bcrypt.compare(password, user.password))) {
-      res.json({
-        _id: user.id,
-        name: user.name,
-        email: user.email,
-        avatar_url: user.avatar_url,
-        cover_url: user.cover_url,
-        dob: user.dob,
-        bio: user.bio,
-        token: generateToken(user.id)
-      });
-    } else {
-      res.status(401).json({ message: "Invalid email or password" });
-    }
+    if (!user) return res.status(401).json({ message: "Invalid email or password" });
+    if (user.status == "suspended") return res.status(403).json({ message: "Account suspended" });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: "Invalid email or password" });
+
+    await AdminLog.create({
+      user: user._id,
+      action: "login",
+      targetType: "User",
+      target: user._id,
+      description: `User ${user.name} đã đăng nhập`
+    });
+
+    res.json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      avatar_url: user.avatar_url,
+      cover_url: user.cover_url,
+      dob: user.dob,
+      bio: user.bio,
+      role: user.role,
+      token: generateToken(user.id)
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const logoutUser = async (req, res) => {
+  try {
+    await AdminLog.create({
+      user: req.user._id,
+      action: "logout",
+      targetType: "User",
+      target: req.user._id,
+      description: `User ${req.user.name} đã đăng xuất`
+    });
+    res.json({ message: "Logged out successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -78,6 +115,15 @@ export const updateProfile = async (req, res) => {
     if (req.body.password) user.password = await bcrypt.hash(req.body.password, 10);
 
     await user.save();
+
+    await AdminLog.create({
+      user: user._id,
+      action: "update",
+      targetType: "User",
+      target: user._id,
+      description: `User ${user.name} đã cập nhật profile`
+    });
+
     res.json({
       _id: user.id,
       name: user.name,
@@ -85,7 +131,8 @@ export const updateProfile = async (req, res) => {
       avatar_url: user.avatar_url,
       cover_url: user.cover_url,
       dob: user.dob,
-      bio: user.bio
+      bio: user.bio,
+      role: user.role
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
