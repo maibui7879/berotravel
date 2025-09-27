@@ -20,6 +20,7 @@ export const createVote = async (req, res) => {
       await AdminLog.create({
         user: req.user._id,
         action: "update",
+        targetType: "Vote",
         target: target_id,
         description: `User ${req.user._id} updated vote (${vote_type}) on ${target_type} ${target_id}`
       });
@@ -46,6 +47,7 @@ export const createVote = async (req, res) => {
     await AdminLog.create({
       user: req.user._id,
       action: "create",
+      targetType: "Vote",
       target: target_id,
       description: `User ${req.user._id} created vote (${vote_type}) on ${target_type} ${target_id}`
     });
@@ -96,6 +98,7 @@ export const deleteVote = async (req, res) => {
     await AdminLog.create({
       user: req.user._id,
       action: "delete",
+      targetType: "Vote",
       target: vote.target_id,
       description: `User ${req.user._id} deleted vote on ${vote.target_type} ${vote.target_id}`
     });
