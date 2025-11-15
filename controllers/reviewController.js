@@ -4,7 +4,6 @@ import { updateUserStats } from "./userStatController.js";
 import Vote from "../models/Vote.js";
 import AdminLog from "../models/AdminLog.js";
 
-// Lấy top 3 review theo vote
 export const getReviewSortByVote = async (req, res) => {
   try {
     const reviews = await Review.find().populate("user_id", "name avatar_url");
@@ -34,7 +33,6 @@ export const getReviewSortByVote = async (req, res) => {
   }
 };
 
-// Lấy tất cả review của place
 export const getReviews = async (req, res) => {
   try {
     const reviews = await Review.find({ place_id: req.params.placeId }).populate("user_id", "name avatar_url");
@@ -53,7 +51,6 @@ export const getReviewsCount = async (req, res) => {
   }
 };
 
-// Tạo review mới
 export const createReview = async (req, res) => {
   try {
     const cleanComment = sanitizeHtml(req.body.comment, {
@@ -85,7 +82,6 @@ export const createReview = async (req, res) => {
   }
 };
 
-// Cập nhật review
 export const updateReview = async (req, res) => {
   try {
     const cleanComment = sanitizeHtml(req.body.comment, {
@@ -117,7 +113,6 @@ export const updateReview = async (req, res) => {
   }
 };
 
-// Xóa review
 export const deleteReview = async (req, res) => {
   try {
     const review = await Review.findOneAndDelete({ _id: req.params.id, user_id: req.user._id });
@@ -139,7 +134,6 @@ export const deleteReview = async (req, res) => {
   }
 };
 
-// Lấy rating trung bình + thống kê vote
 export const getInitialRatingByPlace = async (req, res) => {
   try {
     const placeId = req.params.placeId;

@@ -13,9 +13,8 @@ export const getReplies = async (req, res) => {
 export const createReply = async (req, res) => {
   try {
     const { review_id, content, parent_reply_id } = req.body;
-    const user_id = req.user._id;  // Người dùng đang trả lời bình luận
+    const user_id = req.user._id;
 
-    // Tạo reply mới
     const reply = await Reply.create({
       review_id,
       parent_reply_id,

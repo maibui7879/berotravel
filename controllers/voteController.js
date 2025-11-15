@@ -16,7 +16,6 @@ export const createVote = async (req, res) => {
 
       await updateUserStats(req.user._id);
 
-      // Ghi log
       await AdminLog.create({
         user: req.user._id,
         action: "update",
@@ -25,7 +24,6 @@ export const createVote = async (req, res) => {
         description: `User ${req.user._id} updated vote (${vote_type}) on ${target_type} ${target_id}`
       });
 
-      // Tạo notification nếu là review
       if (target_type === "review") {
         const review = await Review.findById(target_id);
         if (review && review.user_id.toString() !== req.user._id.toString()) {
@@ -43,7 +41,6 @@ export const createVote = async (req, res) => {
 
     await updateUserStats(req.user._id);
 
-    // Ghi log
     await AdminLog.create({
       user: req.user._id,
       action: "create",
@@ -52,7 +49,6 @@ export const createVote = async (req, res) => {
       description: `User ${req.user._id} created vote (${vote_type}) on ${target_type} ${target_id}`
     });
 
-    // Tạo notification nếu là review
     if (target_type === "review") {
       const review = await Review.findById(target_id);
       if (review && review.user_id.toString() !== req.user._id.toString()) {
@@ -94,7 +90,6 @@ export const deleteVote = async (req, res) => {
 
     await updateUserStats(req.user._id);
 
-    // Ghi log
     await AdminLog.create({
       user: req.user._id,
       action: "delete",

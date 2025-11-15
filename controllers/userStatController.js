@@ -4,7 +4,6 @@ import Place from "../models/Place.js";
 import Review from "../models/Review.js";
 import Vote from "../models/Vote.js";
 
-// Cập nhật/khởi tạo thống kê cho 1 user
 export const updateUserStats = async (userIdParam) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(userIdParam)) {
@@ -12,7 +11,6 @@ export const updateUserStats = async (userIdParam) => {
     }
     const userId = new mongoose.Types.ObjectId(userIdParam);
 
-    // Lấy place đã chỉnh sửa
     const places = await Place.find({ updated_by: userId });
     const editedPlaces = places.map(p => ({
       place_id: p._id,
@@ -20,7 +18,6 @@ export const updateUserStats = async (userIdParam) => {
       updated_at: p.updatedAt
     }));
 
-    // Lấy review đã tạo
     const reviews = await Review.find({ user_id: userId });
     const reviewList = reviews.map(r => ({
       review_id: r._id,
@@ -30,7 +27,6 @@ export const updateUserStats = async (userIdParam) => {
       created_at: r.createdAt
     }));
 
-    // Lấy vote đã tạo
     const votes = await Vote.find({ user_id: userId });
     const voteList = votes.map(v => ({
       vote_id: v._id,
@@ -40,7 +36,6 @@ export const updateUserStats = async (userIdParam) => {
       created_at: v.createdAt
     }));
 
-    // Cập nhật hoặc tạo mới
     const stats = await UserStats.findOneAndUpdate(
       { user_id: userId },
       {
@@ -58,7 +53,6 @@ export const updateUserStats = async (userIdParam) => {
   }
 };
 
-// Lấy stats bản thân
 export const getMyStats = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -77,7 +71,6 @@ export const getMyStats = async (req, res) => {
   }
 };
 
-// Lấy stats user khác theo ID
 export const getUserStatsById = async (req, res) => {
   try {
     const { id } = req.params;

@@ -1,10 +1,10 @@
 import User from "../models/User.js";
 import Place from "../models/Place.js";
 
-// Thêm hoặc bỏ favorite cho một place
+
 export const toggleFavorite = async (req, res) => {
   try {
-    const userId = req.user._id;        // user đã được xác thực bởi middleware `protect`
+    const userId = req.user._id;        
     const placeId = req.params.placeId;
 
     const user = await User.findById(userId);
@@ -21,7 +21,6 @@ export const toggleFavorite = async (req, res) => {
       place.favorite_count = (place.favorite_count || 0) + 1;
       action = "added";
     } else {
-      // Bỏ favorite
       user.favorites.splice(index, 1);
       place.favorite_count = Math.max((place.favorite_count || 1) - 1, 0);
       action = "removed";
@@ -36,7 +35,6 @@ export const toggleFavorite = async (req, res) => {
   }
 };
 
-// Lấy danh sách favorite của user
 export const getUserFavorites = async (req, res) => {
   try {
     const userId = req.user._id;
