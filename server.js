@@ -14,7 +14,7 @@ import userStatRoutes from "./routes/userStatRoutes.js"
 import { protect, isAdmin } from "./middleware/authMiddleware.js";
 import adminLogRoutes from "./routes/adminLogRoutes.js";
 import journeyRoutes from "./routes/journeyRoutes.js";
-
+import placeStatusRoutes from "./routes/placeStatusController.js";
 dotenv.config();
 const app = express();
 
@@ -23,6 +23,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use('/api/place-status', placeStatusRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/places", placeRoutes);
 app.use("/api/reviews", reviewRoutes);
