@@ -163,7 +163,6 @@ export const updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Cập nhật booking
     const booking = await Booking.findByIdAndUpdate(
       id,
       { isPaid: true },
