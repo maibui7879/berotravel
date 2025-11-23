@@ -15,6 +15,7 @@ import { protect, isAdmin } from "./middleware/authMiddleware.js";
 import adminLogRoutes from "./routes/adminLogRoutes.js";
 import journeyRoutes from "./routes/journeyRoutes.js";
 import placeStatusRoutes from "./routes/placeStatusController.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
 dotenv.config();
 const app = express();
 
@@ -34,6 +35,7 @@ app.use("/api/notifictions", notificationRoutes);
 app.use("/api/stats", userStatRoutes);
 app.use("/api/admin/logs", adminLogRoutes);
 app.use("/api/journeys", journeyRoutes);
+app.use("/api/bookings", bookingRoutes);
 setupSwagger(app);
 // DB Connect
 mongoose
