@@ -1,13 +1,13 @@
 import Booking from "../models/Booking.js";
 import PlaceStatus from "../models/PlaceStatus.js";
 import Place from "../models/Place.js";
+import Notification from "../models/Notification.js";
 
 // GET: lấy booking theo userId
 export const getBookingsByUser = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Nếu user bình thường, chỉ được xem chính mình
     if (req.user.role !== "admin" && req.user._id.toString() !== userId) {
       return res.status(403).json({ message: "Không có quyền truy cập" });
     }
@@ -31,49 +31,43 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ message: "Vui lòng cung cấp đầy đủ thông tin booking" });
     }
 
-    // Lấy thông tin place
     const placeInfo = await Place.findById(place);
     if (!placeInfo) return res.status(404).json({ message: "Không tìm thấy place" });
 
-    // Lấy giá từ PlaceStatus
     const placeStatus = await PlaceStatus.findOne({ place_id: place });
     if (!placeStatus) return res.status(404).json({ message: "Không tìm thấy trạng thái place" });
 
-    let totalPrice;
     const checkin = new Date(bookingDateTime);
+    const isHotelType = ["hotel", "motel", "resort"].includes(placeInfo.category?.toLowerCase());
 
-    if (placeInfo.category === "hotel") {
-      if (!checkoutDateTime) return res.status(400).json({ message: "checkoutDateTime là bắt buộc với hotel" });
+    let bookingData = {
+      user: req.user._id,
+      place,
+      numberOfPeople,
+      bookingDateTime: checkin,
+      isPaid: !isHotelType, // auto paid nếu không phải hotel/motel/resort
+    };
+
+    if (isHotelType) {
+      if (!checkoutDateTime) return res.status(400).json({ message: "checkoutDateTime là bắt buộc với hotel/motel/resort" });
       const checkout = new Date(checkoutDateTime);
       if (checkout <= checkin) return res.status(400).json({ message: "checkoutDateTime phải lớn hơn bookingDateTime" });
 
       const diffHours = (checkout - checkin) / (1000 * 60 * 60);
-      totalPrice = diffHours * placeStatus.price * numberOfPeople;
+      const totalPrice = diffHours * placeStatus.price * numberOfPeople;
 
-      const booking = await Booking.create({
-        user: req.user._id,
-        place,
-        numberOfPeople,
-        bookingDateTime: checkin,
+      bookingData = {
+        ...bookingData,
         checkoutDateTime: checkout,
         totalPrice,
-      });
-
-      return res.status(201).json(booking);
+      };
     } else {
-      // Nhà hàng, tour, dịch vụ khác
-      totalPrice = placeStatus.price * numberOfPeople;
-
-      const booking = await Booking.create({
-        user: req.user._id,
-        place,
-        numberOfPeople,
-        bookingDateTime: checkin,
-        totalPrice,
-      });
-
-      return res.status(201).json(booking);
+      const totalPrice = placeStatus.price * numberOfPeople;
+      bookingData.totalPrice = totalPrice;
     }
+
+    const booking = await Booking.create(bookingData);
+    return res.status(201).json(booking);
   } catch (error) {
     return res.status(500).json({ message: "Lỗi server", error: error.message });
   }
@@ -99,26 +93,34 @@ export const updateBookingById = async (req, res) => {
     const newCheckoutDate = req.body.checkoutDateTime ? new Date(req.body.checkoutDateTime) : booking.checkoutDateTime;
     const newNumberOfPeople = req.body.numberOfPeople || booking.numberOfPeople;
 
-    let totalPrice;
     const placeStatus = await PlaceStatus.findOne({ place_id: newPlace });
     if (!placeStatus) return res.status(404).json({ message: "Không tìm thấy trạng thái place" });
 
-    if (placeInfo.category === "hotel") {
-      if (!newCheckoutDate) return res.status(400).json({ message: "checkoutDateTime là bắt buộc với hotel" });
-      const diffHours = (newCheckoutDate - newBookingDate) / (1000 * 60 * 60);
-      if (diffHours <= 0) return res.status(400).json({ message: "checkoutDateTime phải lớn hơn bookingDateTime" });
-      totalPrice = diffHours * placeStatus.price * newNumberOfPeople;
-    } else {
-      totalPrice = placeStatus.price * newNumberOfPeople;
-    }
+    const isHotelType = ["hotel", "motel", "resort", "guest_house", "hostel"].includes(placeInfo.category?.toLowerCase());
 
-    const updatedData = {
+    let totalPrice;
+    let updatedData = {
       ...req.body,
       bookingDateTime: newBookingDate,
-      checkoutDateTime: placeInfo.category === "hotel" ? newCheckoutDate : undefined,
       numberOfPeople: newNumberOfPeople,
-      totalPrice,
+      isPaid: !isHotelType, // auto paid nếu không phải hotel/motel/resort
     };
+
+    if (isHotelType) {
+      if (!newCheckoutDate) return res.status(400).json({ message: "checkoutDateTime là bắt buộc với hotel/motel/resort" });
+      const diffHours = (newCheckoutDate - newBookingDate) / (1000 * 60 * 60);
+      if (diffHours <= 0) return res.status(400).json({ message: "checkoutDateTime phải lớn hơn bookingDateTime" });
+
+      totalPrice = diffHours * placeStatus.price * newNumberOfPeople;
+      updatedData = {
+        ...updatedData,
+        checkoutDateTime: newCheckoutDate,
+        totalPrice,
+      };
+    } else {
+      totalPrice = placeStatus.price * newNumberOfPeople;
+      updatedData.totalPrice = totalPrice;
+    }
 
     const updated = await Booking.findByIdAndUpdate(id, updatedData, {
       new: true,
@@ -131,13 +133,24 @@ export const updateBookingById = async (req, res) => {
   }
 };
 
-// PATCH: cập nhật trạng thái xác nhận (confirm) - admin
 export const updateConfirmStatus = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const booking = await Booking.findByIdAndUpdate(id, { isConfirmed: true }, { new: true });
+    // Cập nhật booking
+    const booking = await Booking.findByIdAndUpdate(
+      id,
+      { isConfirmed: true },
+      { new: true }
+    ).populate("user");
+
     if (!booking) return res.status(404).json({ message: "Không tìm thấy booking" });
+
+    // Tạo notification cho user
+    await Notification.create({
+      user_id: booking.user._id,
+      message: `Booking của bạn tại place ${booking.place} đã được xác nhận.`,
+    });
 
     return res.status(200).json(booking);
   } catch (error) {
@@ -150,8 +163,20 @@ export const updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const booking = await Booking.findByIdAndUpdate(id, { isPaid: true }, { new: true });
+    // Cập nhật booking
+    const booking = await Booking.findByIdAndUpdate(
+      id,
+      { isPaid: true },
+      { new: true }
+    ).populate("user");
+
     if (!booking) return res.status(404).json({ message: "Không tìm thấy booking" });
+
+    // Tạo notification cho user
+    await Notification.create({
+      user_id: booking.user._id,
+      message: `Thanh toán cho booking tại place ${booking.place} đã được xác nhận.`,
+    });
 
     return res.status(200).json(booking);
   } catch (error) {

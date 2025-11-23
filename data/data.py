@@ -29,8 +29,8 @@ query = """
   node["natural"~"water|wood|tree"](21.0,105.75,21.2,105.95);
   node["water"="lake"](21.0,105.75,21.2,105.95);
 
-  /* Lưu trú */
-  node["tourism"~"hotel|guest_house|motel|hostel"](21.0,105.75,21.2,105.95);
+  /* Lưu trú (thêm resort) */
+  node["tourism"~"hotel|guest_house|motel|hostel|resort"](21.0,105.75,21.2,105.95);
 
   /* Y tế */
   node["amenity"~"hospital|clinic|pharmacy|doctors"](21.0,105.75,21.2,105.95);
