@@ -1,9 +1,12 @@
 import express from 'express';
 import {
+  getPlaceStatusById,
   getPlaceStatusByPlaceId,
   createPlaceStatus,
-  updatePlaceStatus,
-  deletePlaceStatus
+  updatePlaceStatusById,
+  updatePlaceStatusByPlaceId,
+  deletePlaceStatusById,
+  deletePlaceStatusByPlaceId
 } from '../controllers/placeStatusController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
@@ -56,16 +59,16 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/place-status/{placeId}:
+ * /api/place-status/place/{placeId}:
  *   get:
  *     summary: Get place status by place ID
  *     tags: [PlaceStatus]
  *     parameters:
  *       - in: path
  *         name: placeId
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
  *         description: ID of the place
  *     responses:
  *       200:
@@ -77,7 +80,32 @@ const router = express.Router();
  *       404:
  *         description: Place status not found
  */
-router.get('/:placeId', getPlaceStatusByPlaceId);
+router.get('/place/:placeId', getPlaceStatusByPlaceId);
+
+/**
+ * @swagger
+ * /api/place-status/{id}:
+ *   get:
+ *     summary: Get place status by status ID
+ *     tags: [PlaceStatus]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the place status
+ *     responses:
+ *       200:
+ *         description: Place status found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PlaceStatus'
+ *       404:
+ *         description: Place status not found
+ */
+router.get('/:id', getPlaceStatusById);
 
 /**
  * @swagger
@@ -113,16 +141,16 @@ router.post('/', protect, createPlaceStatus);
  * @swagger
  * /api/place-status/{id}:
  *   put:
- *     summary: Update a place status
+ *     summary: Update a place status by ID
  *     tags: [PlaceStatus]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
  *         description: ID of the place status
  *     requestBody:
  *       required: true
@@ -144,16 +172,16 @@ router.post('/', protect, createPlaceStatus);
  *       404:
  *         description: Place status not found
  *   delete:
- *     summary: Delete a place status
+ *     summary: Delete a place status by ID
  *     tags: [PlaceStatus]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: string
- *         required: true
  *         description: ID of the place status
  *     responses:
  *       200:
@@ -163,7 +191,64 @@ router.post('/', protect, createPlaceStatus);
  *       404:
  *         description: Place status not found
  */
-router.put('/:id', protect, updatePlaceStatus);
-router.delete('/:id', protect, deletePlaceStatus);
+router.put('/:id', protect, updatePlaceStatusById);
+router.delete('/:id', protect, deletePlaceStatusById);
+
+/**
+ * @swagger
+ * /api/place-status/place/{placeId}:
+ *   put:
+ *     summary: Update a place status by place ID
+ *     tags: [PlaceStatus]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: placeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the place
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/PlaceStatus'
+ *     responses:
+ *       200:
+ *         description: Place status updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PlaceStatus'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Place status not found
+ *   delete:
+ *     summary: Delete a place status by place ID
+ *     tags: [PlaceStatus]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: placeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the place
+ *     responses:
+ *       200:
+ *         description: Place status deleted
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Place status not found
+ */
+router.put('/place/:placeId', protect, updatePlaceStatusByPlaceId);
+router.delete('/place/:placeId', protect, deletePlaceStatusByPlaceId);
 
 export default router;

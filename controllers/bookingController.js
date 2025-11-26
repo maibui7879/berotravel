@@ -38,7 +38,7 @@ export const createBooking = async (req, res) => {
     if (!placeStatus) return res.status(404).json({ message: "Không tìm thấy trạng thái place" });
 
     const checkin = new Date(bookingDateTime);
-    const isHotelType = ["hotel", "motel", "resort"].includes(placeInfo.category?.toLowerCase());
+    const isHotelType = ["hotel", "motel", "resort", "guest_house", "hostel"].includes(placeInfo.category?.toLowerCase());
 
     let bookingData = {
       user: req.user._id,
@@ -182,3 +182,30 @@ export const updatePaymentStatus = async (req, res) => {
     return res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
+
+// DELETE: xóa booking theo id
+export const deleteBookingById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await Booking.findById(id).populate("user");
+    if (!booking) return res.status(404).json({ message: "Không tìm thấy booking" });
+
+    if (req.user.role !== "admin" && booking.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Không có quyền xóa booking này" });
+    }
+
+    await booking.deleteOne();
+
+    // Tạo notification cho user
+    await Notification.create({
+      user_id: booking.user._id,
+      message: `Booking của bạn tại place ${booking.place} đã bị hủy.`,
+    });
+
+    return res.status(200).json({ message: "Booking đã được xóa thành công" });
+  } catch (error) {
+    return res.status(500).json({ message: "Lỗi server", error: error.message });
+  }
+};
+

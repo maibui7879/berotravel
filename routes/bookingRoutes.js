@@ -5,6 +5,7 @@ import {
   updateBookingById,
   updateConfirmStatus,
   updatePaymentStatus,
+  deleteBookingById, // import hàm delete mới
 } from "../controllers/bookingController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -186,5 +187,32 @@ router.patch("/:id/confirm", protect, updateConfirmStatus);
  *         description: Lỗi server
  */
 router.patch("/:id/pay", protect, updatePaymentStatus);
+
+/**
+ * @swagger
+ * /api/bookings/{id}:
+ *   delete:
+ *     summary: Xóa booking theo ID
+ *     tags: [Booking]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID booking
+ *     responses:
+ *       200:
+ *         description: Booking đã bị xóa và notification gửi cho user
+ *       403:
+ *         description: Không có quyền xóa
+ *       404:
+ *         description: Không tìm thấy booking
+ *       500:
+ *         description: Lỗi server
+ */
+router.delete("/:id", protect, deleteBookingById);
 
 export default router;

@@ -1,3 +1,5 @@
+//script sửa db, đừng quan tâm
+
 import mongoose from "mongoose";
 import Place from "./models/Place.js";
 import PlaceStatus from "./models/PlaceStatus.js";

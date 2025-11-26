@@ -14,7 +14,7 @@ import userStatRoutes from "./routes/userStatRoutes.js"
 import { protect, isAdmin } from "./middleware/authMiddleware.js";
 import adminLogRoutes from "./routes/adminLogRoutes.js";
 import journeyRoutes from "./routes/journeyRoutes.js";
-import placeStatusRoutes from "./routes/placeStatusController.js";
+import placeStatusRoutes from "./routes/placeStatusRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 dotenv.config();
 const app = express();
@@ -31,7 +31,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/replies", replyRoutes);
 app.use("/api/votes", voteRoutes);
 app.use("/api/favorite", favoriteRoutes);
-app.use("/api/notifictions", notificationRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/stats", userStatRoutes);
 app.use("/api/admin/logs", adminLogRoutes);
 app.use("/api/journeys", journeyRoutes);
