@@ -3,9 +3,16 @@ import PlaceStatus from "../models/PlaceStatus.js";
 import AdminLog from "../models/AdminLog.js";
 
 // GET: tất cả place kèm status
+// GET: tất cả place kèm status + pagination
 export const getPlaces = async (req, res) => {
   try {
-    const places = await Place.find();
+    let { page = 1, limit = 10 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const total = await Place.countDocuments();
+    const places = await Place.find()
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     const placesWithStatus = await Promise.all(
       places.map(async (place) => {
@@ -17,7 +24,13 @@ export const getPlaces = async (req, res) => {
       })
     );
 
-    res.json(placesWithStatus);
+    res.json({
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      data: placesWithStatus
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
