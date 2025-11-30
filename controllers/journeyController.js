@@ -117,9 +117,7 @@ export const updateJourneyStatus = async (req, res) => {
   }
 };
 
-// ==========================
-// Mark a place as visited
-// ==========================
+
 export const markPlaceAsVisited = async (req, res) => {
   try {
     const journey = await Journey.findOne({ _id: req.params.journeyId, user: req.user.id });

@@ -155,7 +155,7 @@ router.put("/:id", protect, updatePlace);
  * @swagger
  * /places/images/{id}:
  *   put:
- *     summary: Cập nhật ảnh chính và ảnh phụ cho địa điểm (không yêu cầu xác thực)
+ *     summary: Cập nhật ảnh chính và ảnh phụ cho địa điểm 
  *     tags: [Địa điểm]
  *     parameters:
  *       - in: path

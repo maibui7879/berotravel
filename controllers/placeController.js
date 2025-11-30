@@ -60,7 +60,7 @@ export const createPlace = async (req, res) => {
       ...req.body,
       updated_by: req.user?.name || "Unknown"
     });
-
+    delete place.favorite_count; // không trả về favorite_count khi tạo mới
     await AdminLog.create({
       user: req.user._id,
       action: "create",
@@ -69,7 +69,6 @@ export const createPlace = async (req, res) => {
       description: `Người dùng ${req.user.name} đã tạo place ${place.name}`
     });
 
-    // Tạo luôn PlaceStatus mặc định
     const status = await PlaceStatus.create({
       place_id: place._id,
       initial_status: "open",
@@ -92,7 +91,7 @@ export const updatePlace = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body, updated_by: req.user?.name || "Unknown" };
-
+    delete updateData.favorite_count; // không cho cập nhật favorite_count trực tiếp
     const place = await Place.findByIdAndUpdate(id, updateData, { new: true });
     if (!place) return res.status(404).json({ message: "Place not found" });
 
@@ -164,7 +163,6 @@ export const deletePlace = async (req, res) => {
   }
 };
 
-// SEARCH: tìm place gần vị trí kèm status
 export const searchPlaceNearby = async (req, res) => {
   try {
     const { latitude, longitude, radius = 4, name, category, page = 1, limit = 10 } = req.query;

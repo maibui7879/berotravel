@@ -1,9 +1,21 @@
 import PlaceStatus from '../models/PlaceStatus.js';
 import Place from '../models/Place.js';
+import AdminLog from '../models/AdminLog.js';
 
-// ---------------- GET ---------------- //
+const createAdminLog = async ({ userId, action, targetType, target, description }) => {
+  try {
+    await AdminLog.create({
+      user: userId,
+      action,
+      targetType,
+      target,
+      description
+    });
+  } catch (err) {
+    console.error("Failed to create admin log:", err);
+  }
+};
 
-// GET place status by ID
 export const getPlaceStatusById = async (req, res) => {
   try {
     const placeStatus = await PlaceStatus.findById(req.params.id);
@@ -14,7 +26,6 @@ export const getPlaceStatusById = async (req, res) => {
   }
 };
 
-// GET place status by place ID
 export const getPlaceStatusByPlaceId = async (req, res) => {
   try {
     const placeStatus = await PlaceStatus.findOne({ place_id: req.params.placeId });
@@ -24,8 +35,6 @@ export const getPlaceStatusByPlaceId = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// ---------------- CREATE ---------------- //
 
 export const createPlaceStatus = async (req, res) => {
   try {
@@ -60,15 +69,20 @@ export const createPlaceStatus = async (req, res) => {
     }
 
     const saved = await newPlaceStatus.save();
+    await createAdminLog({
+      userId: req.user._id,
+      action: "create",
+      targetType: "Place",
+      target: place._id,
+      description: `Created place status for place ${place._id}`
+    });
+
     res.status(201).json(saved);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// ---------------- UPDATE ---------------- //
-
-// UPDATE place status by ID
 export const updatePlaceStatusById = async (req, res) => {
   try {
     const placeStatus = await PlaceStatus.findById(req.params.id);
@@ -99,13 +113,19 @@ export const updatePlaceStatusById = async (req, res) => {
     }
 
     const updated = await placeStatus.save();
+    await createAdminLog({
+      userId: req.user._id,
+      action: "create",
+      targetType: "Place",
+      target: place._id,
+      description: `Created place status for place ${place._id}`
+    });
     res.status(200).json(updated);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// UPDATE place status by place ID
 export const updatePlaceStatusByPlaceId = async (req, res) => {
   try {
     const placeStatus = await PlaceStatus.findOne({ place_id: req.params.placeId });
@@ -136,21 +156,34 @@ export const updatePlaceStatusByPlaceId = async (req, res) => {
     }
 
     const updated = await placeStatus.save();
+    await createAdminLog({
+      userId: req.user._id,
+      action: "update",
+      targetType: "Place",
+      target: place._id,
+      description: `Update place status for place ${place._id}`
+    });
+
     res.status(200).json(updated);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// ---------------- DELETE ---------------- //
-
-// DELETE place status by ID
 export const deletePlaceStatusById = async (req, res) => {
   try {
     const placeStatus = await PlaceStatus.findById(req.params.id);
     if (!placeStatus) return res.status(404).json({ message: 'Place status not found' });
 
     await placeStatus.deleteOne();
+    await createAdminLog({
+      userId: req.user._id,
+      action: "Delete",
+      targetType: "Place",
+      target: place._id,
+      description: `Delete place status for place ${place._id}`
+    });
+
     res.status(200).json({ message: 'Place status removed' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -163,6 +196,13 @@ export const deletePlaceStatusByPlaceId = async (req, res) => {
     if (!placeStatus) return res.status(404).json({ message: 'Place status not found' });
 
     await placeStatus.deleteOne();
+    await createAdminLog({
+      userId: req.user._id,
+      action: "Delete",
+      targetType: "Place",
+      target: place._id,
+      description: `Delete place status for place ${place._id}`
+    });
     res.status(200).json({ message: 'Place status removed' });
   } catch (error) {
     res.status(500).json({ message: error.message });

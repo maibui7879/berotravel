@@ -30,7 +30,7 @@ app.use("/api/places", placeRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/replies", replyRoutes);
 app.use("/api/votes", voteRoutes);
-app.use("/api/favorite", favoriteRoutes);
+app.use("/api/favorites", favoriteRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/stats", userStatRoutes);
 app.use("/api/admin/logs", adminLogRoutes);

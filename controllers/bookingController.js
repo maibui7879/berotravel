@@ -67,6 +67,12 @@ export const createBooking = async (req, res) => {
     }
 
     const booking = await Booking.create(bookingData);
+
+    await Notification.create({
+      user_id: booking.user._id,
+      message: `Booking của bạn tại place ${booking.place} đã được tạo.`,
+    });
+
     return res.status(201).json(booking);
   } catch (error) {
     return res.status(500).json({ message: "Lỗi server", error: error.message });
